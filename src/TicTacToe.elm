@@ -1,5 +1,7 @@
 module TicTacToe where
 
+import Maybe exposing (andThen)
+
 
 type Player = X | O
 
@@ -14,6 +16,8 @@ type alias Position = (Row, Column)
 type alias Space = (Position, Square)
 
 type alias Board = List Space
+
+type WinState = Playing | Win Player | Draw
 
 
 opponent : Player -> Player
@@ -106,6 +110,50 @@ checkRows board =
         bothPlayers
 
 
+getPlayerFromSpace : Space -> Maybe Player
+getPlayerFromSpace space =
+    let
+        (_, square) = space
+    in
+        case square of
+            Taken player -> Just player
+            Open -> Nothing
+
+
+getNextPlayerFromBoard : Board -> Player -> Maybe Player
+getNextPlayerFromBoard board player =
+    let
+        nextSpace = List.head board
+        maybePlayer = nextSpace `andThen` getPlayerFromSpace
+    in
+        maybePlayer `andThen` (\nextPlayer ->
+            if nextPlayer == player then
+                Just player
+            else
+                Nothing)
+
+
+checkDiagonal : Board -> Maybe Player
+checkDiagonal board =
+    List.head board
+        `andThen` getPlayerFromSpace
+        `andThen` (getNextPlayerFromBoard <| List.drop 4 board)
+        `andThen` (getNextPlayerFromBoard <| List.drop 8 board)
+
+
+checkAntiDiagonal : Board -> Maybe Player
+checkAntiDiagonal board =
+    List.head (List.drop 2 board)
+        `andThen` getPlayerFromSpace
+        `andThen` (getNextPlayerFromBoard <| List.drop 4 board)
+        `andThen` (getNextPlayerFromBoard <| List.drop 6 board)
+
+
+checkDiagonals : Board -> List (Maybe Player)
+checkDiagonals board =
+    [checkDiagonal board, checkAntiDiagonal board]
+
+
 isSpaceOpen : Space -> Bool
 isSpaceOpen space =
     case space of
@@ -120,17 +168,20 @@ hasOpenSpaces board =
     List.any isSpaceOpen board
 
 
-checkWin : Board -> (Bool, Maybe Player)
+checkWin : Board -> WinState
 checkWin board =
     let
-        checks = checkRows board ++ checkColumns board
+        checks = checkRows board ++ checkColumns board ++ checkDiagonals board
         maybePlayer = List.head <| List.filterMap identity checks
     in
         case maybePlayer of
-            Just _ ->
-                (True, maybePlayer)
+            Just player ->
+                Win player
             Nothing ->
-                (not <| hasOpenSpaces board, maybePlayer)
+                if hasOpenSpaces board then
+                    Playing
+                else
+                    Draw
 
 
 openSpace : Row -> Column -> Space
