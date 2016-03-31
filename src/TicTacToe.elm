@@ -33,6 +33,13 @@ play player position board =
                 (p, s))
         board
 
+checkWin : Board -> (Bool, Maybe Player)
+checkWin board =
+    case board of
+        (_, Taken X) :: (_, Taken X) :: (_, Taken X) :: rest ->
+            (True, Just X)
+        _ -> 
+            (False, Nothing)
 
 openSpace : Row -> Column -> Space
 openSpace row column =
@@ -48,3 +55,5 @@ openBoard =
                 [L, C, R])
         [T, M, B]
 
+--findBestPlayForPlayer : Player -> Board -> Position
+--findBestPlayForPlayer player board =

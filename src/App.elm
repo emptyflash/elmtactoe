@@ -134,4 +134,6 @@ containerStyle =
 view : Address Action -> Model -> Html
 view address model =
     div [ containerStyle ]
-        [ viewBoard address model.board ]
+        [ viewBoard address model.board 
+        , text <| toString <| checkWin model.board
+        ]
