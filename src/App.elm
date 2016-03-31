@@ -40,25 +40,55 @@ update action model =
         NoOp ->
             model
 
+borderColor : String
+borderColor =
+    "#646C8A"
 
-viewSpaceStyle : Attribute
-viewSpaceStyle = 
-    style
-        [ ("border", "2px solid #dcebdf")
-        , ("flex", "1")
-        ]
+topBorder : (String, String)
+topBorder =
+    ("border-top", "2px solid " ++ borderColor)
+
+leftBorder : (String, String)
+leftBorder =
+    ("border-left", "2px solid " ++ borderColor)
+
+rightBorder : (String, String)
+rightBorder =
+    ("border-right", "2px solid " ++ borderColor)
+
+bottomBorder : (String, String)
+bottomBorder =
+    ("border-bottom", "2px solid " ++ borderColor)
+
+getBorders : Position -> List (String, String)
+getBorders position =
+    case position of
+        (T, L) -> [bottomBorder, rightBorder]
+        (M, L) -> [bottomBorder, rightBorder, topBorder]
+        (B, L) -> [topBorder, rightBorder]
+        (T, C) -> [leftBorder, rightBorder, bottomBorder]
+        (M, C) -> [leftBorder, rightBorder, topBorder, bottomBorder]
+        (B, C) -> [leftBorder, rightBorder, topBorder]
+        (T, R) -> [leftBorder, bottomBorder]
+        (M, R) -> [leftBorder, topBorder, bottomBorder]
+        (B, R) -> [topBorder, leftBorder]
+
+
+viewSpaceStyle : Position -> Attribute
+viewSpaceStyle position = 
+    style <| [ ("flex", "1") ] ++ getBorders position
 
 viewSpace : Address Action -> Space -> Html
 viewSpace address space = 
     case space of
         (position, Open) -> 
             div 
-                [ viewSpaceStyle 
+                [ viewSpaceStyle position
                 , onClick address <| Play position
                 ] 
                 [ ]
-        (_, Taken player) -> 
-            div [ viewSpaceStyle ] [ text <| toString player ]
+        (position, Taken player) -> 
+            div [ viewSpaceStyle position ] [ text <| toString player ]
 
 viewSpaceRowStyle : Attribute
 viewSpaceRowStyle = 
