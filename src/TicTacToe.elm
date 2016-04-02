@@ -1,6 +1,7 @@
 module TicTacToe where
 
 import Maybe exposing (andThen)
+import List.Extra as ListE exposing (minimumBy, maximumBy)
 
 
 type Player = X | O
@@ -27,8 +28,8 @@ opponent player =
         O -> X
 
 
-play : Player -> Position -> Board -> Board
-play player position board =
+play : Player -> Board -> Position -> Board
+play player board position =
     List.map 
         (\(p, s)->
             if position == p then
@@ -198,5 +199,56 @@ openBoard =
                 allColumns)
         allRows
 
---findBestPlayForPlayer : Player -> Board -> Position
---findBestPlayForPlayer player board =
+
+rankPlayerWin : Player -> WinState -> Int
+rankPlayerWin player winState =
+    case winState of
+        Win winner ->
+            if winner == player then
+                10
+            else
+                -10
+        _ ->
+            0
+
+minimax: Board -> Player -> Player -> List (Int, Position)
+minimax board originalPlayer currentPlayer =
+    let
+        availableSpaces = List.filter isSpaceOpen board
+        positions = 
+            List.map
+                (\space -> let (position, _) = space in position)
+                availableSpaces
+    in
+        positions `ListE.andThen`
+            (\position ->
+                let
+                    newBoard = play currentPlayer board position
+                    winState = checkWin newBoard
+                    minOrMax  =
+                        if originalPlayer == currentPlayer then
+                            maximumBy fst
+                        else
+                            minimumBy fst
+                in
+                    case winState of
+                        Playing ->
+                            let
+                                ranks = 
+                                    minimax newBoard originalPlayer
+                                        <| opponent currentPlayer
+                                maybeRankedMove = minOrMax ranks
+                            in
+                                case maybeRankedMove of
+                                    Just rankedMove ->
+                                        [rankedMove]
+                                    Nothing ->
+                                        []
+                        _ ->
+                            [(rankPlayerWin originalPlayer winState, position)])
+
+findBestPlayForPlayer : Player -> Board -> Maybe Position
+findBestPlayForPlayer player board =
+    minimax board player player
+        |> maximumBy fst
+        |> Maybe.map snd

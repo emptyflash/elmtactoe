@@ -31,7 +31,7 @@ update action model =
         Play position ->
             let
                 player = opponent model.lastPlayer
-                newBoard = play player position model.board
+                newBoard = play player model.board position 
             in
                 { model 
                 | board = newBoard
@@ -135,5 +135,7 @@ view : Address Action -> Model -> Html
 view address model =
     div [ containerStyle ]
         [ viewBoard address model.board 
-        , text <| toString <| checkWin model.board
+        , minimax (opponent model.lastPlayer) (opponent model.lastPlayer) model.board
+            |> toString
+            |> text
         ]
