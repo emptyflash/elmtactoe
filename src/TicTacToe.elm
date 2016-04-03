@@ -200,55 +200,56 @@ openBoard =
         allRows
 
 
-rankPlayerWin : Player -> WinState -> Int
-rankPlayerWin player winState =
+getScore : Int -> Player -> WinState -> Int
+getScore depth player winState =
     case winState of
         Win winner ->
             if winner == player then
-                10
+                10 - depth
             else
-                -10
+                depth - 10
         _ ->
             0
 
-minimax: Board -> Player -> Player -> List (Int, Position)
-minimax board originalPlayer currentPlayer =
-    let
-        availableSpaces = List.filter isSpaceOpen board
-        positions = 
-            List.map
-                (\space -> let (position, _) = space in position)
-                availableSpaces
-    in
-        positions `ListE.andThen`
-            (\position ->
-                let
-                    newBoard = play currentPlayer board position
-                    winState = checkWin newBoard
-                    minOrMax  =
-                        if originalPlayer == currentPlayer then
-                            maximumBy fst
-                        else
-                            minimumBy fst
-                in
-                    case winState of
-                        Playing ->
-                            let
-                                ranks = 
-                                    minimax newBoard originalPlayer
-                                        <| opponent currentPlayer
-                                maybeRankedMove = minOrMax ranks
-                            in
-                                case maybeRankedMove of
-                                    Just rankedMove ->
-                                        [rankedMove]
-                                    Nothing ->
-                                        []
-                        _ ->
-                            [(rankPlayerWin originalPlayer winState, position)])
 
-findBestPlayForPlayer : Player -> Board -> Maybe Position
-findBestPlayForPlayer player board =
-    minimax board player player
-        |> maximumBy fst
-        |> Maybe.map snd
+getPositionFromSpace : Space -> Position
+getPositionFromSpace space =
+    let (position, _) = space in position
+
+
+minimax : Int -> Player -> Player -> Board -> (Int, Maybe Position)
+minimax depth originalPlayer currentPlayer board =
+    let
+        availableSpaces = 
+            List.filter isSpaceOpen board
+        initialWinState = checkWin board
+    in
+        case (List.length availableSpaces, initialWinState) of
+            (9, _) -> (10, Just (B, R))
+            (_, Win _) ->
+                (getScore depth originalPlayer initialWinState, Nothing)
+            (_, Draw) ->
+                (0, Nothing)
+            _ ->
+            let
+                availablePositions = 
+                    List.map getPositionFromSpace availableSpaces
+                scoresAndMoves =
+                    List.map
+                        (\position ->
+                        let
+                            newBoard = play currentPlayer board position
+                            winState = checkWin newBoard
+                        in
+                            case winState of
+                                Playing ->
+                                    minimax (depth - 1) originalPlayer (opponent currentPlayer) newBoard
+                                _ ->
+                                    (getScore depth originalPlayer winState, Just position)
+                        )
+                        availablePositions 
+            in
+                if originalPlayer == currentPlayer then
+                    Maybe.withDefault (0, Nothing) <| minimumBy fst scoresAndMoves
+                else
+                    Maybe.withDefault (0, Nothing) <| maximumBy fst scoresAndMoves

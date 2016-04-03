@@ -135,7 +135,7 @@ view : Address Action -> Model -> Html
 view address model =
     div [ containerStyle ]
         [ viewBoard address model.board 
-        , minimax (opponent model.lastPlayer) (opponent model.lastPlayer) model.board
+        , minimax 0 (opponent model.lastPlayer) (opponent model.lastPlayer) model.board
             |> toString
             |> text
         ]
