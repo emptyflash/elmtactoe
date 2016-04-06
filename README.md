@@ -1,9 +1,4 @@
 # ElmTacToe
-Tic tac toe in Elm using the minmax algorithm
+Tic tac toe in Elm with minimax AI
 
-Run with:
-````
-elm reactor -p 8080
-````
-
-Go to `localhost:8080`
+To play, run `elm make src/Main.elm --output elm.js` and open main.html
