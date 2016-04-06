@@ -47,7 +47,7 @@ update action model =
 
 borderColor : String
 borderColor =
-  "#646C8A"
+  "#000000"
 
 
 topBorder : ( String, String )
@@ -103,7 +103,21 @@ getBorders position =
 
 viewSpaceStyle : Position -> Attribute
 viewSpaceStyle position =
-  style <| [ ( "flex", "1" ) ] ++ getBorders position
+  style
+    <| [ ( "flex", "1" )
+       , ( "display", "flex" )
+       , ( "justify-content", "center" )
+       , ( "align-items", "center" )
+       ]
+    ++ getBorders position
+
+
+viewPlayer : Player -> Html
+viewPlayer player =
+  if player == X then
+    i [ class "fa fa-times fa-5x" ] []
+  else
+    i [ class "fa fa-circle-o fa-5x" ] []
 
 
 viewSpace : Address Action -> Space -> Html
@@ -117,7 +131,7 @@ viewSpace address space =
         []
 
     ( position, Taken player ) ->
-      div [ viewSpaceStyle position ] [ text <| toString player ]
+      div [ viewSpaceStyle position ] [ viewPlayer player ]
 
 
 viewSpaceRowStyle : Attribute
