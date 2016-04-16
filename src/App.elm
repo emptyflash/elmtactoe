@@ -120,13 +120,13 @@ viewPlayer player =
     i [ class "fa fa-circle-o fa-5x" ] []
 
 
-viewSpace : Address Action -> Space -> Html
-viewSpace address space =
+viewSpace : (Position -> Html.Attribute) -> Space -> Html
+viewSpace getEventAction space =
   case space of
     ( position, Open ) ->
       div
         [ viewSpaceStyle position
-        , onClick address <| Play position
+        , getEventAction position
         ]
         []
 
@@ -142,21 +142,27 @@ viewSpaceRowStyle =
     ]
 
 
-viewSpaceRow : Address Action -> List Space -> Html
-viewSpaceRow address spaces =
+viewSpaceRow 
+  : (Position -> Html.Attribute)
+  -> List Space 
+  -> Html
+viewSpaceRow getEventAction spaces =
   div [ viewSpaceRowStyle ]
-    <| List.map (viewSpace address) spaces
+    <| List.map (viewSpace getEventAction) spaces
 
 
-partitionGrid : Address Action -> List Space -> List Html
-partitionGrid address spaces =
+partitionGrid 
+  : (Position -> Html.Attribute) 
+  -> List Space 
+  -> List Html
+partitionGrid getEventAction spaces =
   case spaces of
     [] ->
       [ text "" ]
 
     _ ->
-      [ viewSpaceRow address <| List.take 3 spaces ]
-        ++ (partitionGrid address <| List.drop 3 spaces)
+      [ viewSpaceRow getEventAction <| List.take 3 spaces ]
+        ++ (partitionGrid getEventAction <| List.drop 3 spaces)
 
 
 viewBoardStyle : Attribute
@@ -169,25 +175,70 @@ viewBoardStyle =
     ]
 
 
+viewWin : Player -> Html
+viewWin player =
+    div []
+      [ h2 []
+          [ player
+             |> toString
+             |> (flip (++)) " WINS!"
+             |> text
+          ]
+      ]
+
+
+viewDraw : Html
+viewDraw =
+    div [] 
+      [ h1 [] 
+         [ text "IT'S A DRAW" ]
+      ]
+
+
 viewBoard : Address Action -> Board -> Html
 viewBoard address board =
-  div [ viewBoardStyle ]
-    <| partitionGrid address board
+  let
+    winState = checkWin board
+    getEventAction position =
+        case winState of
+            Playing ->
+                onClick address <| Play position
+            _ ->
+                onClick address <| NoOp
+  in
+    div [ viewBoardStyle ]
+        <| partitionGrid getEventAction board
 
 
 containerStyle =
   style
     [ ( "display", "flex" )
     , ( "justify-content", "center" )
+    , ( "flex-direction", "column-reverse" )
+    , ( "align-items", "center" )
     ]
 
 
 view : Address Action -> Model -> Html
 view address model =
+  let
+      board = model.board
+      boardDisplay = viewBoard address board 
+      boardAndWinText =
+          case checkWin board of
+              Playing ->
+                 [ boardDisplay ]
+              Win player ->
+                 [ viewWin player
+                 , boardDisplay
+                 ]
+              Draw ->
+                 [ viewDraw
+                 , boardDisplay
+                 ] 
+    in
+
   div
     [ containerStyle ]
-    [ viewBoard address model.board
-    , minimax 0 (opponent model.lastPlayer) (opponent model.lastPlayer) model.board
-        |> toString
-        |> text
-    ]
+    boardAndWinText
+-- minimax 0 (opponent model.lastPlayer) (opponent model.lastPlayer) model.board
