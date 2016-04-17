@@ -142,19 +142,13 @@ viewSpaceRowStyle =
     ]
 
 
-viewSpaceRow 
-  : (Position -> Html.Attribute)
-  -> List Space 
-  -> Html
+viewSpaceRow : (Position -> Html.Attribute) -> List Space -> Html
 viewSpaceRow getEventAction spaces =
   div [ viewSpaceRowStyle ]
     <| List.map (viewSpace getEventAction) spaces
 
 
-partitionGrid 
-  : (Position -> Html.Attribute) 
-  -> List Space 
-  -> List Html
+partitionGrid : (Position -> Html.Attribute) -> List Space -> List Html
 partitionGrid getEventAction spaces =
   case spaces of
     [] ->
@@ -177,37 +171,44 @@ viewBoardStyle =
 
 viewWin : Player -> Html
 viewWin player =
-    div []
-      [ h2 []
-          [ player
-             |> toString
-             |> (flip (++)) " WINS!"
-             |> text
-          ]
-      ]
+  div
+    []
+    [ h1
+        []
+        [ player
+            |> toString
+            |> (flip (++)) " WINS!"
+            |> text
+        ]
+    ]
 
 
 viewDraw : Html
 viewDraw =
-    div [] 
-      [ h1 [] 
-         [ text "IT'S A DRAW" ]
-      ]
+  div
+    []
+    [ h1
+        []
+        [ text "IT'S A DRAW" ]
+    ]
 
 
 viewBoard : Address Action -> Board -> Html
 viewBoard address board =
   let
-    winState = checkWin board
+    winState =
+      checkWin board
+
     getEventAction position =
-        case winState of
-            Playing ->
-                onClick address <| Play position
-            _ ->
-                onClick address <| NoOp
+      case winState of
+        Playing ->
+          onClick address <| Play position
+
+        _ ->
+          onClick address <| NoOp
   in
     div [ viewBoardStyle ]
-        <| partitionGrid getEventAction board
+      <| partitionGrid getEventAction board
 
 
 containerStyle =
@@ -222,23 +223,31 @@ containerStyle =
 view : Address Action -> Model -> Html
 view address model =
   let
-      board = model.board
-      boardDisplay = viewBoard address board 
-      boardAndWinText =
-          case checkWin board of
-              Playing ->
-                 [ boardDisplay ]
-              Win player ->
-                 [ viewWin player
-                 , boardDisplay
-                 ]
-              Draw ->
-                 [ viewDraw
-                 , boardDisplay
-                 ] 
-    in
+    board =
+      model.board
 
-  div
-    [ containerStyle ]
-    boardAndWinText
+    boardDisplay =
+      viewBoard address board
+
+    boardAndWinText =
+      case checkWin board of
+        Playing ->
+          [ boardDisplay ]
+
+        Win player ->
+          [ viewWin player
+          , boardDisplay
+          ]
+
+        Draw ->
+          [ viewDraw
+          , boardDisplay
+          ]
+  in
+    div
+      [ containerStyle ]
+      boardAndWinText
+
+
+
 -- minimax 0 (opponent model.lastPlayer) (opponent model.lastPlayer) model.board
